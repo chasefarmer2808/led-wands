@@ -5,7 +5,7 @@
 #include <Adafruit_NeoPixel.h>
 
 #define PIXEL_PIN 4
-#define NUM_PIXELS 10
+#define NUM_PIXELS 20
 #define ACTIVATE_SPELL_PIN 3
 
 Adafruit_NeoPixel pixels(NUM_PIXELS, PIXEL_PIN, NEO_GRBW + NEO_KHZ800);
@@ -90,6 +90,7 @@ void lumosSpell(uint8_t power)
   if (power >= 3)
   {
     pixels.setPixelColor(pixels.numPixels() - 3, WHITE);
+    pixels.setPixelColor(pixels.numPixels() - 4, WHITE);
   }
 
   pixels.show();
