@@ -19,12 +19,16 @@ enum Spell
 Adafruit_NeoPixel pixels(NUM_PIXELS, PIXEL_PIN, NEO_GRBW + NEO_KHZ800);
 Adafruit_LIS3DH lis = Adafruit_LIS3DH();
 
+const uint8_t BRIGHTNESS = 80;
+
 const uint32_t WHITE = pixels.Color(0, 0, 0, 255);
 const uint32_t BLACK = pixels.Color(0, 0, 0, 0);
 const int8_t GREEN_FIRE_R = 74;
 const int8_t GREEN_FIRE_G = 150;
 const int8_t GREEN_FIRE_B = 12;
-const uint32_t GREEN_FLAME_COLOR = pixels.Color(GREEN_FIRE_R, GREEN_FIRE_G, GREEN_FIRE_B, 0);
+const int8_t RED_FIRE_R = 226;
+const int8_t RED_FIRE_G = 121;
+const int8_t RED_FIRE_B = 35;
 
 float currAccel = 0;
 uint8_t currPower = 0;
@@ -102,13 +106,12 @@ void lumosSpell(uint8_t power)
   if (power >= 3)
   {
     pixels.setPixelColor(pixels.numPixels() - 3, WHITE);
-    pixels.setPixelColor(pixels.numPixels() - 4, WHITE);
   }
 
   pixels.show();
 }
 
-void greenFireSpell(uint8_t power)
+void fireSpell(uint8_t power, uint8_t fireR, uint8_t fireG, uint8_t fireB)
 {
   if (power == 0)
   {
@@ -120,9 +123,9 @@ void greenFireSpell(uint8_t power)
   for (uint16_t i = 0; i < pixels.numPixels(); i++)
   {
     int flicker = random(0, 55);
-    int r1 = GREEN_FIRE_R - flicker;
-    int g1 = GREEN_FIRE_G - flicker;
-    int b1 = GREEN_FIRE_B - flicker;
+    int r1 = fireR - flicker;
+    int g1 = fireG - flicker;
+    int b1 = fireB - flicker;
     if (g1 < 0)
       g1 = 0;
     if (r1 < 0)
@@ -138,7 +141,7 @@ void greenFireSpell(uint8_t power)
 void changeSpell()
 {
   currSpell++;
-  currSpell %= 2;
+  currSpell %= 3;
   maxPower = 0; // Prevents the next spell from animating automatically.
 }
 
@@ -153,7 +156,7 @@ void setup()
   Serial.begin(115200);
 
   pixels.begin();
-  pixels.setBrightness(32);
+  pixels.setBrightness(BRIGHTNESS);
   pixels.show();
   pixels.fill(WHITE);
   pixels.show();
@@ -216,7 +219,10 @@ void loop()
       lumosSpell(currMaxPower);
       break;
     case GREEN_FIRE:
-      greenFireSpell(currMaxPower);
+      fireSpell(currMaxPower, GREEN_FIRE_R, GREEN_FIRE_G, GREEN_FIRE_B);
+      break;
+    case RED_FIRE:
+      fireSpell(currMaxPower, RED_FIRE_R, RED_FIRE_G, RED_FIRE_B);
       break;
     }
     resetSpell = false;
