@@ -7,19 +7,30 @@
 #define PIXEL_PIN 4
 #define NUM_PIXELS 20
 #define ACTIVATE_SPELL_PIN 3
+#define CHANGE_SPELL_PIN 1
+
+enum Spell
+{
+  LUMOS,
+  GREEN_FIRE,
+  RED_FIRE
+};
 
 Adafruit_NeoPixel pixels(NUM_PIXELS, PIXEL_PIN, NEO_GRBW + NEO_KHZ800);
 Adafruit_LIS3DH lis = Adafruit_LIS3DH();
 
 const uint32_t WHITE = pixels.Color(0, 0, 0, 255);
 const uint32_t BLACK = pixels.Color(0, 0, 0, 0);
-
-const byte INTERRUPT_PIN = 1;
+const int8_t GREEN_FIRE_R = 74;
+const int8_t GREEN_FIRE_G = 150;
+const int8_t GREEN_FIRE_B = 12;
+const uint32_t GREEN_FLAME_COLOR = pixels.Color(GREEN_FIRE_R, GREEN_FIRE_G, GREEN_FIRE_B, 0);
 
 float currAccel = 0;
 uint8_t currPower = 0;
 uint8_t maxPower = 0;
 uint8_t currMaxPower = 0;
+uint8_t currSpell = LUMOS;
 bool resetMax = false;
 bool resetSpell = true;
 
@@ -59,6 +70,7 @@ void lumosSpell(uint8_t power)
     return;
   }
 
+  // Use this condition when we want the spell to only animate once on every button press.
   if (!resetSpell)
   {
     return;
@@ -96,13 +108,47 @@ void lumosSpell(uint8_t power)
   pixels.show();
 }
 
+void greenFireSpell(uint8_t power)
+{
+  if (power == 0)
+  {
+    pixels.fill(BLACK);
+    pixels.show();
+    return;
+  }
+
+  for (uint16_t i = 0; i < pixels.numPixels(); i++)
+  {
+    int flicker = random(0, 55);
+    int r1 = GREEN_FIRE_R - flicker;
+    int g1 = GREEN_FIRE_G - flicker;
+    int b1 = GREEN_FIRE_B - flicker;
+    if (g1 < 0)
+      g1 = 0;
+    if (r1 < 0)
+      r1 = 0;
+    if (b1 < 0)
+      b1 = 0;
+    pixels.setPixelColor(i, pixels.Color(g1, r1, b1, 0));
+  }
+  pixels.show();
+  delay(random(10, 113));
+}
+
+void changeSpell()
+{
+  currSpell++;
+  currSpell %= 2;
+  maxPower = 0; // Prevents the next spell from animating automatically.
+}
+
 void setup()
 {
   pinMode(LED_BUILTIN, OUTPUT);
-  // pinMode(INTERRUPT_PIN, INPUT_PULLUP);
-  // attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), blink, RISING);
 
   pinMode(ACTIVATE_SPELL_PIN, INPUT_PULLUP);
+  pinMode(CHANGE_SPELL_PIN, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(CHANGE_SPELL_PIN), changeSpell, RISING);
 
   Serial.begin(115200);
 
@@ -164,7 +210,15 @@ void loop()
       pixels.show();
     }
 
-    lumosSpell(currMaxPower);
+    switch (currSpell)
+    {
+    case LUMOS:
+      lumosSpell(currMaxPower);
+      break;
+    case GREEN_FIRE:
+      greenFireSpell(currMaxPower);
+      break;
+    }
     resetSpell = false;
   }
 }
