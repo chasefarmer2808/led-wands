@@ -158,11 +158,26 @@ void zapSpell(uint8_t power)
   uint8_t i;
   for (i = 0; i < pixels.numPixels(); i++)
   {
-    if (i > 0)
+    if (i > (power - 1))
     {
-      pixels.setPixelColor(i - 1, BLACK);
+      pixels.setPixelColor(i - power, BLACK);
     }
-    pixels.setPixelColor(i, colors[zapColorIndex]);
+
+    if (power == 1)
+    {
+      pixels.setPixelColor(i, colors[zapColorIndex]);
+    }
+    else if (power == 2)
+    {
+      pixels.setPixelColor(i, colors[zapColorIndex]);
+      pixels.setPixelColor(i - 1, colors[zapColorIndex]);
+    }
+    else if (power == 3)
+    {
+      pixels.setPixelColor(i, colors[zapColorIndex]);
+      pixels.setPixelColor(i - 1, colors[zapColorIndex]);
+      pixels.setPixelColor(i - 2, colors[zapColorIndex]);
+    }
     pixels.show();
     delay(20);
   }
