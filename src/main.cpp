@@ -3,6 +3,7 @@
 #include <Adafruit_LIS3DH.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_NeoPixel.h>
+#include "colors.h"
 
 #define PIXEL_PIN 4
 #define NUM_PIXELS 20
@@ -13,16 +14,17 @@ enum Spell
 {
   LUMOS,
   GREEN_FIRE,
-  RED_FIRE
+  RED_FIRE,
+  ZAP
 };
+
+int colors[] = {BLUE, GREEN, TEAL, LIME, SPRINGGREEN, CYAN, INDIGO, MAROON, OLIVE, YELLOWGREEN, PLUM, SALMON, DEEPPINK, FUCHSIA, YELLOW};
 
 Adafruit_NeoPixel pixels(NUM_PIXELS, PIXEL_PIN, NEO_GRBW + NEO_KHZ800);
 Adafruit_LIS3DH lis = Adafruit_LIS3DH();
 
 const uint8_t BRIGHTNESS = 80;
 
-const uint32_t WHITE = pixels.Color(0, 0, 0, 255);
-const uint32_t BLACK = pixels.Color(0, 0, 0, 0);
 const int8_t GREEN_FIRE_R = 74;
 const int8_t GREEN_FIRE_G = 150;
 const int8_t GREEN_FIRE_B = 12;
@@ -35,6 +37,7 @@ uint8_t currPower = 0;
 uint8_t maxPower = 0;
 uint8_t currMaxPower = 0;
 uint8_t currSpell = LUMOS;
+uint8_t zapColorIndex = 0;
 bool resetMax = false;
 bool resetSpell = true;
 
@@ -79,7 +82,6 @@ void lumosSpell(uint8_t power)
   {
     return;
   }
-  Serial.println(power);
 
   uint16_t i;
   for (i = 0; i < pixels.numPixels(); i++)
@@ -138,10 +140,45 @@ void fireSpell(uint8_t power, uint8_t fireR, uint8_t fireG, uint8_t fireB)
   delay(random(10, 113));
 }
 
+void zapSpell(uint8_t power)
+{
+  if (power == 0)
+  {
+    pixels.fill(BLACK);
+    pixels.show();
+    return;
+  }
+
+  // Use this condition when we want the spell to only animate once on every button press.
+  if (!resetSpell)
+  {
+    return;
+  }
+
+  uint8_t i;
+  for (i = 0; i < pixels.numPixels(); i++)
+  {
+    if (i > 0)
+    {
+      pixels.setPixelColor(i - 1, BLACK);
+    }
+    pixels.setPixelColor(i, colors[zapColorIndex]);
+    pixels.show();
+    delay(20);
+  }
+
+  zapColorIndex++;
+  zapColorIndex %= sizeof(colors);
+
+  delay(750);
+  pixels.fill(BLACK);
+  pixels.show();
+}
+
 void changeSpell()
 {
   currSpell++;
-  currSpell %= 3;
+  currSpell %= 4;
   maxPower = 0; // Prevents the next spell from animating automatically.
 }
 
@@ -223,6 +260,9 @@ void loop()
       break;
     case RED_FIRE:
       fireSpell(currMaxPower, RED_FIRE_R, RED_FIRE_G, RED_FIRE_B);
+      break;
+    case ZAP:
+      zapSpell(currMaxPower);
       break;
     }
     resetSpell = false;
